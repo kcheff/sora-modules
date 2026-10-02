@@ -4,10 +4,10 @@
   "iconURL": "https://allmanga.to/pics/avatar-w.png",
   "author": {
     "name": "xdfkenny",
-    "icon": "https://yt3.googleusercontent.com/NHr6Y6qhYIUeoyIBdgeEYArXI1_ebVcLAuf562jPB6WSFTunOwPVuWC90eAG1zmeD6_Wy9_0mTs=s160-c-k-c0x00ffffff-no-rj",
+    "icon": "https://allmanga.to/pics/avatar-w.png",
     "url": "https://github.com/xdfkenny"
   },
-  "description": "AllManga manga module with valid script URL.",
+  "description": "AllManga manga and novels module.",
   "version": "1.3.0",
   "language": "English",
   "languageType": [
@@ -17,8 +17,8 @@
   "quality": "N/A",
   "baseUrl": "https://allmanga.to/",
   "searchBaseUrl": "https://allmanga.to/search-manga?keyword=%s",
-  "scriptUrl": "https://raw.githubusercontent.com/xdfkenny/Sora-Modules/main/allmanga-novels/allmanga-novels.js",
-  "scriptURL": "https://raw.githubusercontent.com/xdfkenny/Sora-Modules/main/allmanga-novels/allmanga-novels.js",
+  "scriptUrl": "https://raw.githubusercontent.com/kcheff/sora-modules/main/allmanga.js",
+  "scriptURL": "https://raw.githubusercontent.com/kcheff/sora-modules/main/allmanga.js",
   "type": "mangas",
   "downloadSupport": false,
   "asyncJS": true,
