@@ -7,8 +7,8 @@
     "icon": "https://allmanga.to/pics/avatar-w.png",
     "url": "https://github.com/kcheff"
   },
-  "description": "AllManga manga and novels module.",
-  "version": "1.3.0",
+  "description": "AllManga manga module by kcheff.",
+  "version": "2.0.0",
   "language": "English",
   "languageType": [
     "Translated"
