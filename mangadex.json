@@ -1,0 +1,30 @@
+{
+  "sourceName": "MangaDex",
+  "iconUrl": "https://mangadex.org/favicon.ico",
+  "iconURL": "https://mangadex.org/favicon.ico",
+  "author": {
+    "name": "kcheff",
+    "url": "https://github.com/kcheff"
+  },
+  "description": "Read manga directly from MangaDex using their official public API.",
+  "version": "1.0.0",
+  "language": "English",
+  "languageType": [
+    "Translated"
+  ],
+  "streamType": "mangas",
+  "quality": "N/A",
+  "baseUrl": "https://mangadex.org/",
+  "searchBaseUrl": "https://mangadex.org/search?q=%s",
+  "scriptUrl": "https://raw.githubusercontent.com/kcheff/sora-modules/main/mangadex.js",
+  "scriptURL": "https://raw.githubusercontent.com/kcheff/sora-modules/main/mangadex.js",
+  "type": "mangas",
+  "downloadSupport": false,
+  "asyncJS": true,
+  "softsub": false,
+  "supportsDartotsu": false,
+  "supportsLuna": true,
+  "supportsAnymex": false,
+  "supportsEclipse": true,
+  "supportsShirox": false
+}
