@@ -1,5 +1,5 @@
 /**
- * AllManga Module for Sora
+ * AllManga Module for Sora by kcheff
  */
 
 const API_ENDPOINTS = [
@@ -7,38 +7,42 @@ const API_ENDPOINTS = [
   "https://api.mkissa.net/api"
 ];
 
-// Helper to handle Sora's native fetchv2 responses
+// Helper to query AllAnime / AllManga GraphQL backend via GET
 async function sendGraphQL(query, variables) {
-  const payload = JSON.stringify({ query, variables });
   const headers = {
-    "Content-Type": "application/json",
     "Referer": "https://allmanga.to",
     "Origin": "https://allmanga.to",
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
   };
 
+  const cleanQuery = query.replace(/\s+/g, " ").trim();
+  const varsString = JSON.stringify(variables);
+
   for (const endpoint of API_ENDPOINTS) {
     try {
-      const res = await fetchv2(endpoint, headers, "POST", payload);
+      const url = `${endpoint}?variables=${encodeURIComponent(varsString)}&query=${encodeURIComponent(cleanQuery)}`;
+      const res = await fetchv2(url, headers, "GET", null);
+      
       let data = res;
       if (typeof res === "string") {
         try { data = JSON.parse(res); } catch (_) { continue; }
       } else if (res && typeof res.json === "function") {
         data = await res.json();
       }
+      
       if (data && data.data) return data.data;
     } catch (e) {
-      // Fall through to next mirror
+      // Fall through to next endpoint
     }
   }
   return null;
 }
 
-// 1. Search manga
+// 1. Search Manga (queries 'shows' with isManga: true)
 async function searchResults(keyword) {
   const query = `
-    query ($search: SearchInput, $limit: Int, $page: Int, $translationType: VaildTranslationTypeEnumType) {
-      mangas(search: $search, limit: $limit, page: $page, translationType: $translationType) {
+    query ($search: SearchInput, $limit: Int, $page: Int, $translationType: VaildTranslationTypeEnumType, $countryOrigin: VaildCountryEnumType) {
+      shows(search: $search, limit: $limit, page: $page, translationType: $translationType, countryOrigin: $countryOrigin) {
         edges {
           _id
           name
@@ -53,17 +57,19 @@ async function searchResults(keyword) {
     search: {
       allowAdult: false,
       allowUnknown: false,
+      isManga: true,
       query: keyword
     },
     limit: 26,
     page: 1,
-    translationType: "sub"
+    translationType: "sub",
+    countryOrigin: "ALL"
   };
 
   const data = await sendGraphQL(query, variables);
-  if (!data || !data.mangas || !data.mangas.edges) return [];
+  if (!data || !data.shows || !data.shows.edges) return [];
 
-  return data.mangas.edges.map(edge => {
+  return data.shows.edges.map(edge => {
     let img = edge.thumbnail || "";
     if (img && !img.startsWith("http")) {
       img = "https://wp.allanime.day" + (img.startsWith("/") ? "" : "/") + img;
@@ -77,11 +83,11 @@ async function searchResults(keyword) {
   });
 }
 
-// 2. Manga details & chapter count
+// 2. Manga details
 async function extractDetails(id) {
   const query = `
     query ($showId: String!) {
-      manga(showId: $showId) {
+      show(_id: $showId) {
         _id
         name
         englishName
@@ -94,9 +100,9 @@ async function extractDetails(id) {
   `;
 
   const data = await sendGraphQL(query, { showId: id });
-  if (!data || !data.manga) return {};
+  if (!data || !data.show) return {};
 
-  const m = data.manga;
+  const m = data.show;
   let img = m.thumbnail || "";
   if (img && !img.startsWith("http")) {
     img = "https://wp.allanime.day" + (img.startsWith("/") ? "" : "/") + img;
@@ -110,20 +116,20 @@ async function extractDetails(id) {
   };
 }
 
-// 3. Extract all chapters
+// 3. Manga chapter list
 async function extractChapters(id) {
   const query = `
     query ($showId: String!) {
-      manga(showId: $showId) {
+      show(_id: $showId) {
         availableChaptersDetail
       }
     }
   `;
 
   const data = await sendGraphQL(query, { showId: id });
-  if (!data || !data.manga || !data.manga.availableChaptersDetail) return [];
+  if (!data || !data.show || !data.show.availableChaptersDetail) return [];
 
-  const chaptersObj = data.manga.availableChaptersDetail;
+  const chaptersObj = data.show.availableChaptersDetail;
   const subChapters = chaptersObj.sub || chaptersObj.raw || [];
 
   return subChapters.map(ch => ({
@@ -133,27 +139,30 @@ async function extractChapters(id) {
   }));
 }
 
-// 4. Extract pages for a chapter
+// 4. Chapter pages
 async function extractImages(chapterIdentifier) {
-  const [mangaId, chapterNum] = chapterIdentifier.split(":");
-  if (!mangaId || !chapterNum) return [];
+  const [showId, chapterNum] = chapterIdentifier.split(":");
+  if (!showId || !chapterNum) return [];
 
   const query = `
-    query ($mangaId: String!, $chapterNum: String!) {
-      chapterPages(mangaId: $mangaId, chapterNum: $chapterNum) {
-        edges {
-          pictureUrl
-          pictureUrls
-        }
+    query ($showId: String!, $translationType: VaildTranslationTypeEnumType!, $episodeString: String!) {
+      episode(showId: $showId, translationType: $translationType, episodeString: $episodeString) {
+        sourceUrls
       }
     }
   `;
 
-  const data = await sendGraphQL(query, { mangaId, chapterNum });
-  if (!data || !data.chapterPages || !data.chapterPages.edges) return [];
+  const variables = {
+    showId: showId,
+    translationType: "sub",
+    episodeString: chapterNum
+  };
 
-  return data.chapterPages.edges.map(page => {
-    let url = page.pictureUrl || (page.pictureUrls && page.pictureUrls[0]) || "";
+  const data = await sendGraphQL(query, variables);
+  if (!data || !data.episode || !data.episode.sourceUrls) return [];
+
+  return data.episode.sourceUrls.map(item => {
+    let url = item.sourceUrl || item.url || "";
     if (url && !url.startsWith("http")) {
       url = "https://wp.allanime.day" + (url.startsWith("/") ? "" : "/") + url;
     }
@@ -161,7 +170,7 @@ async function extractImages(chapterIdentifier) {
   }).filter(Boolean);
 }
 
-// Global exports for Sora and Luna compatibility
+// Global exports for Sora compatibility
 globalThis.searchResults = searchResults;
 globalThis.extractDetails = extractDetails;
 globalThis.extractChapters = extractChapters;
